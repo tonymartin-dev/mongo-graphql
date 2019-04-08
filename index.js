@@ -34,12 +34,5 @@ app.use(
         console.log(bodyParser.json())
     }
 );
-
-var router = express.Router();
-router.post('/', function(req, res, next) {
-    return res.json();
-})
-app.use('/users', router);
-
     
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
