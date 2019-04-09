@@ -8,7 +8,7 @@ import schema from "./graphql/";
 
 const app = express();
 const PORT = process.env.PORT || "4000";
-const db_url = 'mongodb+srv://accesoDB:chachiwachi@test-ut0wm.gcp.mongodb.net/forum?retryWrites=true';
+const db_url = 'mongodb+srv://accesoDB:chachiwachi@test-ut0wm.gcp.mongodb.net/shop?retryWrites=true';
 
 // Connect to MongoDB with Mongoose.
 mongoose
