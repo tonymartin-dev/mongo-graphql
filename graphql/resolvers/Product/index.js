@@ -1,11 +1,12 @@
 // The Product schema.
 import Product from "../../../models/Product";
+var ObjectId = require('mongodb').ObjectID;
 
 export default {
   Query: {
     product: (root, args) => {
       return new Promise((resolve, reject) => {
-        Product.findOne(args).exec((err, res) => {
+        Product.findOne(ObjectId(args._id)).exec((err, res) => {
           err ? reject(err) : resolve(res);
         });
       });
@@ -27,11 +28,20 @@ export default {
             err ? reject(err) : resolve(res);
           });
       });
+    },
+    productsByName: (root, args) => {
+      return new Promise((resolve, reject) => {
+        Product.find(args)
+          .populate()
+          .exec((err, res) => {
+            err ? reject(err) : resolve(res);
+          });
+      });
     }
   },
   Mutation: {
-    addProduct: (root, { name, description, price, category }) => {
-      const newProduct = new Product({ name, description, price, category });
+    addProduct: (root, { _id, name, description, price, category }) => {
+      const newProduct = new Product({ _id, name, description, price, category });
 
       return new Promise((resolve, reject) => {
         newProduct.save((err, res) => {
@@ -41,6 +51,7 @@ export default {
     },
     editProduct: (root, { _id, name, description, price, category }) => {
       return new Promise((resolve, reject) => {
+        console.log('####ID:',_id)
         Product.findOneAndUpdate({ _id }, { $set: { name, description, price, category } }).exec(
           (err, res) => {
             err ? reject(err) : resolve(res);

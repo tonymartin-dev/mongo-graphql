@@ -1,9 +1,14 @@
 import mongoose from "mongoose";
+var ObjectId = require('mongodb').ObjectID;
 
 const Schema = mongoose.Schema;
 
 // Create the Product Schema.
 const ProductSchema = new Schema({
+  _id: {
+    type: ObjectId,
+    unique: true
+  },
   name: {
     type: String,
     required: true,
@@ -23,6 +28,6 @@ const ProductSchema = new Schema({
   }
 });
 
-const Product = mongoose.model("Product", ProductSchema, 'Product');
+const Product = mongoose.model("Product", ProductSchema, 'Products');
 
 export default Product;

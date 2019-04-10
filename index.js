@@ -8,9 +8,9 @@ import schema from "./graphql/";
 
 const app = express();
 const PORT = process.env.PORT || "4000";
-const db_url = 'mongodb+srv://accesoDB:chachiwachi@test-ut0wm.gcp.mongodb.net/shop?retryWrites=true';
-
+const db_url = 'mongodb://127.0.0.1:27017/shop';
 // Connect to MongoDB with Mongoose.
+mongoose.set('useFindAndModify', false);    //Prevent buggy error log
 mongoose
     .connect(
         db_url,
@@ -20,7 +20,7 @@ mongoose
         }
     )
     .then(() => console.log("MongoDB connected"))
-    .catch(err => console.log(err));
+    .catch(err => console.log("ERROR connecting with DB: \n", err));
 
 app.use(
     "/graphql",
