@@ -16,7 +16,8 @@ mongoose
         db_url,
         {
             useCreateIndex: true,
-            useNewUrlParser: true
+            useNewUrlParser: true,
+            useUnifiedTopology: true
         }
     )
     .then(() => console.log("MongoDB connected"))

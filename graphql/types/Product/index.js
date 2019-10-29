@@ -13,8 +13,8 @@ export default `
     productsByName(name: String!): [Product]
   }
   type Mutation {
-    addProduct(_id: String, name: String!, description: String!, price: String!, category: String!): Product
+    addProduct(name: String!, description: String!, price: String!, category: String!): Product
     editProduct(_id: String, name: String, description: String, price: String, category: String): Product
-    deleteProduct(id: String, name: String, description: String, price: String!, category: String!): Product
+    deleteProduct(_id: String): Product
   }
 `;

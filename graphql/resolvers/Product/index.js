@@ -1,12 +1,11 @@
 // The Product schema.
 import Product from "../../../models/Product";
-var ObjectId = require('mongodb').ObjectID;
 
 export default {
   Query: {
     product: (root, args) => {
       return new Promise((resolve, reject) => {
-        Product.findOne(ObjectId(args._id)).exec((err, res) => {
+        Product.findById(args._id).exec((err, res) => {
           err ? reject(err) : resolve(res);
         });
       });
@@ -51,8 +50,7 @@ export default {
     },
     editProduct: (root, { _id, name, description, price, category }) => {
       return new Promise((resolve, reject) => {
-        console.log('####ID:',_id)
-        Product.findOneAndUpdate({ _id }, { $set: { name, description, price, category } }).exec(
+        Product.findByIdAndUpdate({ _id }, { $set: { name, description, price, category } }).exec(
           (err, res) => {
             err ? reject(err) : resolve(res);
           }

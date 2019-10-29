@@ -10,6 +10,13 @@ export default {
         });
       });
     },
+    userByID: (root, args) => {
+      return new Promise((resolve, reject) => {
+        User.findById(args._id).exec((err, res) => {
+          err ? reject(err) : resolve(res);
+        });
+      });
+    },
     users: () => {
       return new Promise((resolve, reject) => {
         User.find({})
@@ -30,9 +37,9 @@ export default {
         });
       });
     },
-    editUser: (root, { id, name, email }) => {
+    editUser: (root, { _id, id, name, email }) => {
       return new Promise((resolve, reject) => {
-        User.findOneAndUpdate({ id }, { $set: { name, email } }).exec(
+        User.findByIdAndUpdate(_id, { $set: { id, name, email } }).exec(
           (err, res) => {
             err ? reject(err) : resolve(res);
           }
