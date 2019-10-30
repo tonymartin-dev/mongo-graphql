@@ -10,9 +10,12 @@ export default {
         });
       });
     },
-    products: () => {
+    products: (root, args) => {
+      console.log('Searching products.', {args})
       return new Promise((resolve, reject) => {
         Product.find({})
+          .limit(args.limit)
+          .skip(args.skip)
           .populate()
           .exec((err, res) => {
             err ? reject(err) : resolve(res);
