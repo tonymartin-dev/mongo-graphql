@@ -11,7 +11,7 @@ export default `
     products( limit: Int, skip: Int ): [Product]
     productsByCategory(category: String!): [Product]
     productsByName(name: String!): [Product]
-    productsCount(_id: String!): Int
+    productsCount(name: String): Int
   }
   type Mutation {
     addProduct(name: String!, description: String!, price: String!, category: String!): Product
