@@ -31,9 +31,11 @@ export default {
           });
       });
     },
-    productsByName: (root, args) => {
+    productsByName: (root, {name}) => {
       return new Promise((resolve, reject) => {
-        Product.find(args)
+        const searchQuery =  RegExp(`.*${name}.*`, 'i')
+        console.log({searchQuery});
+        Product.find({name: searchQuery})
           .populate()
           .exec((err, res) => {
             err ? reject(err) : resolve(res);
