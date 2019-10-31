@@ -7,7 +7,19 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Linux",
+            "program": "${workspaceFolder}/index.js",
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/babel-node",
+            "runtimeArgs": ["--nolazy"],
+            "env": {
+              "BABEL_ENV": "debug"
+            }
+        },
+       
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Windows",
             "program": "${workspaceFolder}\\index.js",
             "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/babel-node",
             "args": [],

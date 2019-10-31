@@ -39,6 +39,14 @@ export default {
             err ? reject(err) : resolve(res);
           });
       });
+    },
+    productsCount: (root, args) => {
+      return new Promise((resolve, reject) => {
+        Product.countDocuments({})
+          .exec((err, res) => {
+            err ? reject(err) : resolve(res);
+          });
+      });
     }
   },
   Mutation: {
