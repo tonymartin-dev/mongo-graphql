@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-var ObjectId = require('mongodb').ObjectID;
 
 const Schema = mongoose.Schema;
 
