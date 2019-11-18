@@ -24,7 +24,9 @@ export default {
     },
     productsByCategory: (root, args) => {
       return new Promise((resolve, reject) => {
-        Product.find(args)
+        Product.find({category: args.category})
+          .limit(args.limit)
+          .skip(args.skip)
           .populate()
           .exec((err, res) => {
             err ? reject(err) : resolve(res);

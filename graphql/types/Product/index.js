@@ -9,7 +9,7 @@ export default `
   type Query {
     product(_id: String!): Product
     products( limit: Int, skip: Int ): [Product]
-    productsByCategory(category: String!): [Product]
+    productsByCategory(category: String!, limit: Int, skip: Int): [Product]
     productsByName(name: String!): [Product]
     productsCount(name: String): Int
   }
