@@ -33,6 +33,24 @@ export default {
           });
       });
     },
+    productsByCategories: (root, args) => {
+      let categories = [];
+      args.categories.forEach(category => {
+        categories.push({category});
+      });
+      console.log({categories});
+      const query = { $or: categories };
+      console.log({query});
+      return new Promise((resolve, reject) => {
+        Product.find(query)
+          .limit(args.limit)
+          .skip(args.skip)
+          .populate()
+          .exec((err, res) => {
+            err ? reject(err) : resolve(res);
+          });
+      });
+    },
     productsByName: (root, {name}) => {
       return new Promise((resolve, reject) => {
         const searchQuery =  RegExp(`.*${name}.*`, 'i')
