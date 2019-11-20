@@ -13,6 +13,7 @@ export default `
     productsByCategories(categories:[String!]!, limit: Int, skip: Int): [Product]
     productsByName(name: String!): [Product]
     productsCount(name: String): Int
+    productsByCategoriesCount(categories:[String]): Int
   }
   type Mutation {
     addProduct(name: String!, description: String!, price: String!, category: String!): Product

@@ -11,36 +11,37 @@ export default {
       });
     },
     products: (root, args) => {
-      console.log('Searching products.', {args})
+      console.log('[Query]: products', args)
       return new Promise((resolve, reject) => {
         Product.find({})
           .limit(args.limit)
           .skip(args.skip)
           .populate()
           .exec((err, res) => {
+            console.log('[Response]: products.', res)
             err ? reject(err) : resolve(res);
           });
       });
     },
     productsByCategory: (root, args) => {
+      console.log('[Query]: productsByCategory', args)
       return new Promise((resolve, reject) => {
         Product.find({category: args.category})
           .limit(args.limit)
           .skip(args.skip)
           .populate()
           .exec((err, res) => {
+            console.log('[Response]: productsByCategory', res)
             err ? reject(err) : resolve(res);
           });
       });
     },
     productsByCategories: (root, args) => {
       let categories = [];
-      args.categories.forEach(category => {
-        categories.push({category});
-      });
-      console.log({categories});
+      args.categories.forEach(category=>categories.push({category}));
       const query = { $or: categories };
-      console.log({query});
+      
+      console.log('[Query]: productsByCategories',{query});
       return new Promise((resolve, reject) => {
         Product.find(query)
           .limit(args.limit)
@@ -49,12 +50,13 @@ export default {
           .exec((err, res) => {
             err ? reject(err) : resolve(res);
           });
-      });
+        });
     },
     productsByName: (root, {name}) => {
+      const searchQuery =  RegExp(`.*${name}.*`, 'i');
+
+      console.log('[Query]: productsByName', {searchQuery});
       return new Promise((resolve, reject) => {
-        const searchQuery =  RegExp(`.*${name}.*`, 'i')
-        console.log({searchQuery});
         Product.find({name: searchQuery})
           .populate()
           .exec((err, res) => {
@@ -63,9 +65,25 @@ export default {
       });
     },
     productsCount: (root, args) => {
+      console.log('[Query]: productsCount')
       return new Promise((resolve, reject) => {
         Product.countDocuments({})
           .exec((err, res) => {
+            console.log('[Response]: productsCount', res)
+            err ? reject(err) : resolve(res);
+          });
+      });
+    },
+    productsByCategoriesCount: (root, args) => {
+      let categories = [];
+      args.categories.forEach(category=>categories.push({category}));
+      const query = { $or: categories };
+      
+      console.log('[Query]: productsByCategoriesCount',{query}); 
+      return new Promise((resolve, reject) => {
+        Product.countDocuments(query)
+          .exec((err, res) => {
+            console.log('[Response]: productsByCategoriesCount', res)
             err ? reject(err) : resolve(res);
           });
       });
