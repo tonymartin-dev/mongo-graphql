@@ -51,6 +51,31 @@ export default {
             err ? reject(err) : resolve(res);
           });
         });
+      
+    },
+    productsByCategoriesAndCount: (root, args) => {
+      let categories = [];
+      args.categories.forEach(category=>categories.push({category}));
+      const query = { $or: categories };
+      
+      const countPromise = Product.countDocuments(query).exec();
+      const productsPromise = Product.find(query)
+        .limit(args.limit)
+        .skip(args.skip)
+        .populate()
+        .exec();
+      
+      console.log('[Query]: productsByCategoriesAndCount',{query});
+      return new Promise((resolve, reject)=>{
+        Promise.all([productsPromise, countPromise]).then((res,err)=>{
+          const formattedResponse = {
+            products: res[0],
+            count: res[1]
+          }
+          console.log('[Response]: productsByCategoriesCount', res)
+          err ? reject(err) : resolve(formattedResponse);
+        })
+      });
     },
     productsByName: (root, {name}) => {
       const searchQuery =  RegExp(`.*${name}.*`, 'i');
