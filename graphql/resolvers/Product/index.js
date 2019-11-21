@@ -1,6 +1,30 @@
 // The Product schema.
 import Product from "../../../models/Product";
 
+//UTILS
+const productsAndCountPromise = (_promisesArray)=>{
+  return new Promise((resolve, reject)=>{
+    Promise.all(_promisesArray)
+      .then(([products, count],err)=>{
+        const formattedResponse = { products, count }
+        console.log('[Response]: productsAndCount', { products, count })
+        err ? reject(err) : resolve(formattedResponse);
+      })
+  });
+}
+
+const countByQuery = (_query)=>{
+  console.log('[Query]: countByQuery')
+  return new Promise((resolve, reject) => {
+    Product.countDocuments(_query)
+      .exec((err, res) => {
+        console.log('[Response]: productsCount', res)
+        err ? reject(err) : resolve(res);
+      });
+  });
+}
+
+//QUERIES
 const product = (root, args) => {
   return new Promise((resolve, reject) => {
     Product.findById(args._id).exec((err, res) => {
@@ -21,6 +45,11 @@ const products = (root, args) => {
         err ? reject(err) : resolve(res);
       });
   });
+}
+
+const productsAndCount = (root, args) => {
+  console.log('[Query]: productsAndCount');
+  return productsAndCountPromise([products(root, args), productsCount(root, args)])
 }
 
 const productsByCategory = (root, args) => {
@@ -56,36 +85,18 @@ const productsByCategories = (root, args) => {
 }
 
 const productsByCategoriesAndCount = (root, args) => {
-  let categories = [];
-  args.categories.forEach(category=>categories.push({category}));
-  const query = { $or: categories };
-  
-  const countPromise = Product.countDocuments(query).exec();
-  const productsPromise = Product.find(query)
-    .limit(args.limit)
-    .skip(args.skip)
-    .populate()
-    .exec();
-  
-  console.log('[Query]: productsByCategoriesAndCount',{query});
-  return new Promise((resolve, reject)=>{
-    Promise.all([productsPromise, countPromise]).then((res,err)=>{
-      const formattedResponse = {
-        products: res[0],
-        count: res[1]
-      }
-      console.log('[Response]: productsByCategoriesCount', res)
-      err ? reject(err) : resolve(formattedResponse);
-    })
-  });
+  console.log('[Query]: productsByCategoriesAndCount');
+  return productsAndCountPromise([productsByCategories(root, args), productsByCategoriesCount(root, args)])
 }
 
-const productsByName = (root, {name}) => {
-  const searchQuery =  RegExp(`.*${name}.*`, 'i');
+const productsByName = (root, args) => {
+  const searchQuery =  RegExp(`.*${args.name}.*`, 'i');
 
   console.log('[Query]: productsByName', {searchQuery});
   return new Promise((resolve, reject) => {
     Product.find({name: searchQuery})
+      .limit(args.limit)
+      .skip(args.skip)
       .populate()
       .exec((err, res) => {
         err ? reject(err) : resolve(res);
@@ -93,15 +104,17 @@ const productsByName = (root, {name}) => {
   });
 }
 
+const productsByNameAndCount = (root, args) => {
+  const searchQuery =  RegExp(`.*${args.name}.*`, 'i');
+
+  console.log('[Query]: productsByNameAndCount', {searchQuery});
+  return productsAndCountPromise([productsByName(root, args), countByQuery({name: searchQuery})])
+  
+}
+
 const productsCount = (root, args) => {
-  console.log('[Query]: productsCount')
-  return new Promise((resolve, reject) => {
-    Product.countDocuments({})
-      .exec((err, res) => {
-        console.log('[Response]: productsCount', res)
-        err ? reject(err) : resolve(res);
-      });
-  });
+  console.log('[Query]: productsCount');
+  return countByQuery({})
 }
 
 const productsByCategoriesCount = (root, args) => {
@@ -110,14 +123,10 @@ const productsByCategoriesCount = (root, args) => {
   const query = { $or: categories };
   
   console.log('[Query]: productsByCategoriesCount',{query}); 
-  return new Promise((resolve, reject) => {
-    Product.countDocuments(query)
-      .exec((err, res) => {
-        console.log('[Response]: productsByCategoriesCount', res)
-        err ? reject(err) : resolve(res);
-      });
-  });
+  return countByQuery(query);
 }
+
+//MUTATIONS
 
 const addProduct= (root, { _id, name, description, price, category }) => {
   const newProduct = new Product({ _id, name, description, price, category });
@@ -151,10 +160,12 @@ export default {
   Query: {
     product,
     products,
+    productsAndCount,
     productsByCategory,
     productsByCategories,
     productsByCategoriesAndCount,
     productsByName,
+    productsByNameAndCount,
     productsCount,
     productsByCategoriesCount
   },
