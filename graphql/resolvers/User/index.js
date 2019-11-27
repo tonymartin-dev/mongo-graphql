@@ -11,24 +11,24 @@ function login(root, {username, password}){
   return new Promise((resolve, reject) => {
     User.findOne({username}).exec((findError, userData) => {
       
-      if(findError) reject(findError);
+      if(findError || !userData) return reject(new Error('INCORRECT_LOGIN'));
       
-      bcrypt.compare(password, userData.password, function(logErr, isLogged) {
-        if(logErr || !isLogged) reject(logErr);
-        userData.token = generateToken({username});
-        console.log('[TOKEN GENERATED]: ', {token: userData.token});
-        resolve(userData);
-      });
+      const isLogged = bcrypt.compareSync(password, userData.password);
+      if(!isLogged) return reject(new Error('INCORRECT_LOGIN'));
+      
+      userData.token = generateToken({username});
+      console.log('[TOKEN GENERATED]: ', {token: userData.token});
 
+      resolve(userData);
+      
     });
   });
 }
 
 function userByID(root, args, context){
-  var token = (context.headers && context.headers.authorization) ? context.headers.authorization.replace('Bearer ', '') : null
-  console.log((`[context header authorizaton] - ${token}`));
   return new Promise((resolve, reject) => {
-    if(isTokenValid(token))
+    //if(isTokenValid(context.headers))
+    isTokenValid(context.headers);
       User.findById(args._id).exec((queryErr, res) => {
         queryErr ? reject(queryErr) : resolve(res);
       });
