@@ -2,13 +2,14 @@ const jwt = require('jsonwebtoken')
 const secretKey = 'CHtLJ,8f252rm[j';
 const tokenExpirationSeconds= 180;
 
-function generateToken(_data) {
+function generateToken(_userData) {
+  const tokenData = {username: _userData.username, role: _userData.role}
   let expiration = Math.floor(new Date().getTime() / 1000) + tokenExpirationSeconds;
-  let token = jwt.sign(_data, secretKey, { expiresIn: expiration });
+  let token = jwt.sign(tokenData, secretKey, { expiresIn: expiration });
   return token;
 }
 
-function isTokenValid(_headers) {
+function validateAuthorization(_headers) {
   const token = (_headers && _headers.authorization) ? _headers.authorization.replace('Bearer ', '') : null
   console.log((`[context header authorizaton] - ${token}`));
   let payload;
@@ -27,4 +28,4 @@ function isTokenValid(_headers) {
   return;
 }
 
-export {generateToken, isTokenValid}
+export {generateToken, validateAuthorization}

@@ -1,13 +1,13 @@
 // The User schema.
 import User from "../../../models/User";
 const bcrypt = require('bcrypt')
-import {generateToken, isTokenValid} from '../../../auth/auth'
+import {generateToken, validateAuthorization} from '../../../auth/auth'
 
 /**
-* QUERIES
-*/
+ * QUERIES
+ */
 
-function login(root, {username, password}){
+const login = (root, {username, password})=>{
   return new Promise((resolve, reject) => {
     User.findOne({username}).exec((findError, userData) => {
       
@@ -16,7 +16,7 @@ function login(root, {username, password}){
       const isLogged = bcrypt.compareSync(password, userData.password);
       if(!isLogged) return reject(new Error('INCORRECT_LOGIN'));
       
-      userData.token = generateToken({username});
+      userData.token = generateToken(userData);
       console.log('[TOKEN GENERATED]: ', {token: userData.token});
 
       resolve(userData);
@@ -25,66 +25,79 @@ function login(root, {username, password}){
   });
 }
 
-function userByID(root, args, context){
+const userByID = (root, args, context)=>{
   return new Promise((resolve, reject) => {
-    //if(isTokenValid(context.headers))
-    isTokenValid(context.headers);
-      User.findById(args._id).exec((queryErr, res) => {
-        queryErr ? reject(queryErr) : resolve(res);
+    validateAuthorization(context.headers);
+    User.findById(args._id).exec((queryErr, res) => {
+      queryErr ? reject(queryErr) : resolve(res);
+    });
+  });
+}
+
+const user = (root, args, context)=>{
+  return new Promise((resolve, reject) => {
+    User.findOne(args).exec((err, res) => {
+      err ? reject(err) : resolve(res);
+    });
+  });
+}
+
+const users = (root, args, context)=>{
+  return new Promise((resolve, reject) => {
+    User.find({})
+      .populate()
+      .exec((err, res) => {
+        err ? reject(err) : resolve(res);
       });
   });
 }
+
+/**
+ * MUTATIONS
+ */
+
+const addUser = (root, { _id, username, email, password, role }, context)=>{
+  return new Promise((resolve, reject) => {
+    bcrypt.genSalt(10, function(err, salt){
+      bcrypt.hash(password, salt, function(err, hash){
+        const newUser = new User({ _id, username, password: hash, email, role });
+        console.log('[NEW USER]: ', newUser)
+        newUser.save((err, res) => {
+          err ? reject(err) : resolve(res);
+        });
+      });
+    });
+  });
+};
+
+const editUser = (root, { _id, id, name, email }, context)=>{
+  return new Promise((resolve, reject) => {
+    User.findByIdAndUpdate(_id, { $set: { id, name, email } }).exec(
+      (err, res) => {
+        err ? reject(err) : resolve(res);
+      }
+    );
+  });
+};
+
+const deleteUser = (root, args, context)=>{
+  return new Promise((resolve, reject) => {
+    User.findOneAndRemove(args).exec((err, res) => {
+      err ? reject(err) : resolve(res);
+    });
+  });
+};
 
 export default {
   Query: {
     login,
     userByID,
-    user: (root, args) => {
-      return new Promise((resolve, reject) => {
-        User.findOne(args).exec((err, res) => {
-          err ? reject(err) : resolve(res);
-        });
-      });
-    },
-    users: () => {
-      return new Promise((resolve, reject) => {
-        User.find({})
-          .populate()
-          .exec((err, res) => {
-            err ? reject(err) : resolve(res);
-          });
-      });
-    }
+    user,
+    users
   },
   Mutation: {
-    addUser: (root, { _id, username, email, password, role }, context) => {
-      return new Promise((resolve, reject) => {
-        bcrypt.genSalt(10, function(err, salt){
-          bcrypt.hash(password, salt, function(err, hash){
-            const newUser = new User({ _id, username, password: hash, email, role });
-            console.log('[NEW USER]: ', newUser)
-            newUser.save((err, res) => {
-              err ? reject(err) : resolve(res);
-            });
-          });
-        });
-      });
-    },
-    editUser: (root, { _id, id, name, email }) => {
-      return new Promise((resolve, reject) => {
-        User.findByIdAndUpdate(_id, { $set: { id, name, email } }).exec(
-          (err, res) => {
-            err ? reject(err) : resolve(res);
-          }
-        );
-      });
-    },
-    deleteUser: (root, args) => {
-      return new Promise((resolve, reject) => {
-        User.findOneAndRemove(args).exec((err, res) => {
-          err ? reject(err) : resolve(res);
-        });
-      });
-    }
+    addUser,
+    editUser,
+    deleteUser
   }
 };
