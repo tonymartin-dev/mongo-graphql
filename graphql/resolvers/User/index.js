@@ -1,7 +1,7 @@
 // The User schema.
 import User from "../../../models/User";
 const bcrypt = require('bcrypt')
-import {generateToken, validateAuthorization} from '../../../auth/auth'
+import {generateToken, validateAuthorization, isAdministrator, isSameClient} from '../../../auth/auth'
 
 /**
  * QUERIES
@@ -36,6 +36,7 @@ const userByID = (root, args, context)=>{
 
 const user = (root, args, context)=>{
   return new Promise((resolve, reject) => {
+    validateAuthorization(context.headers);
     User.findOne(args).exec((err, res) => {
       err ? reject(err) : resolve(res);
     });
@@ -44,6 +45,7 @@ const user = (root, args, context)=>{
 
 const users = (root, args, context)=>{
   return new Promise((resolve, reject) => {
+    validateAuthorization(context.headers);
     User.find({})
       .populate()
       .exec((err, res) => {
@@ -56,31 +58,61 @@ const users = (root, args, context)=>{
  * MUTATIONS
  */
 
-const addUser = (root, { _id, username, email, password, role }, context)=>{
-  return new Promise((resolve, reject) => {
-    bcrypt.genSalt(10, function(err, salt){
-      bcrypt.hash(password, salt, function(err, hash){
-        const newUser = new User({ _id, username, password: hash, email, role });
-        console.log('[NEW USER]: ', newUser)
-        newUser.save((err, res) => {
-          err ? reject(err) : resolve(res);
-        });
-      });
+const addUser = (root, { username, email, password }, context)=>{
+  return new Promise(async(resolve, reject) => {
+    const hash = await bcrypt.hash(password, await bcrypt.genSalt(10));
+    const newUser = new User({ username, password: hash, email, role: 'user' });
+    console.log('[NEW USER]: ', newUser)
+    newUser.save((err, res) => {
+      console.log('[NEW USER CREATED]: ', res)
+      err ? reject(err) : resolve(res);
     });
   });
 };
 
-const editUser = (root, { _id, id, name, email }, context)=>{
+const editUser = (root, { _id, username, email, role, password }, context)=>{
   return new Promise((resolve, reject) => {
-    User.findByIdAndUpdate(_id, { $set: { id, name, email } }).exec(
-      (err, res) => {
-        err ? reject(err) : resolve(res);
-      }
-    );
+    //Check Auth
+    validateAuthorization(context.headers);
+    const isAdmin = isAdministrator(context.headers);
+    const sameClient = isSameClient(context.headers, _id);
+    if(!isAdmin && !sameClient) 
+      return reject(new Error('NOT_ALLOWED'));
+    
+    const updateClient = (_hash)=>{
+      const saveClient = isAdmin ? 
+        //Select allowed fields depending on user role
+        { username, email, role, password: _hash } :
+        { username, email, password: _hash };
+      //Query
+      User.findByIdAndUpdate(_id, { $set: saveClient }).exec(
+        (err, res) => {
+          res.role = !isAdmin && role ? 'NOT_ALLOWED' : res.role;
+          res.password = password ? 'SUCCESSFULLY_CHANGED' : 'NOT_CHANGED';
+          err ? reject(err) : resolve(res);
+        }
+      );
+    }
+
+    if(password){
+      bcrypt.genSalt(10).then(salt=>{
+        bcrypt.hash(password, salt).then(hash=>{
+          updateClient(hash);
+        })
+      })
+    }else{
+      updateClient();
+    }
+    
   });
 };
 
 const deleteUser = (root, args, context)=>{
+  validateAuthorization(context.headers);
+  const isAdmin = isAdministrator(context.headers);
+  const sameClient = isSameClient(context.headers, _id);
+  if(!isAdmin && !sameClient) 
+    return reject(new Error('NOT_ALLOWED'));
   return new Promise((resolve, reject) => {
     User.findOneAndRemove(args).exec((err, res) => {
       err ? reject(err) : resolve(res);
