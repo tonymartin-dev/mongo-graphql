@@ -9,6 +9,7 @@ export default `
   }
   type Query {
     login(username: String!, password: String!): User
+    refreshToken: String
     user(username: String!): User
     userByID(_id: String!): User
     users: [User]

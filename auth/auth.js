@@ -41,4 +41,4 @@ const getPayload = (_headers)=>{
   }
 }
 
-export {generateToken, validateAuthorization, isAdministrator, isSameClient}
+export {generateToken, validateAuthorization, isAdministrator, isSameClient, getPayload}

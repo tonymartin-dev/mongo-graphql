@@ -1,7 +1,8 @@
 // The User schema.
 import User from "../../../models/User";
 const bcrypt = require('bcrypt')
-import {generateToken, validateAuthorization, isAdministrator, isSameClient} from '../../../auth/auth'
+//import {generateToken, validateAuthorization, isAdministrator, isSameClient, getPayload} from '../../../auth/auth'
+import * as auth from '../../../auth/auth'
 
 /**
  * QUERIES
@@ -16,7 +17,7 @@ const login = (root, {username, password})=>{
       const isLogged = bcrypt.compareSync(password, userData.password);
       if(!isLogged) return reject(new Error('INCORRECT_LOGIN'));
       
-      userData.token = generateToken(userData);
+      userData.token = auth.generateToken(userData);
       console.log('[TOKEN GENERATED]: ', {token: userData.token});
 
       resolve(userData);
@@ -25,9 +26,18 @@ const login = (root, {username, password})=>{
   });
 }
 
+const refreshToken =  (root, args, context)=>{
+  return new Promise((resolve, reject) => {
+    auth.validateAuthorization(context.headers);
+    const payload = auth.getPayload(context.headers);
+    const token = auth.generateToken(payload);
+    resolve(token)
+  })
+}
+
 const userByID = (root, args, context)=>{
   return new Promise((resolve, reject) => {
-    validateAuthorization(context.headers);
+    auth.validateAuthorization(context.headers);
     User.findById(args._id).exec((queryErr, res) => {
       queryErr ? reject(queryErr) : resolve(res);
     });
@@ -36,7 +46,7 @@ const userByID = (root, args, context)=>{
 
 const user = (root, args, context)=>{
   return new Promise((resolve, reject) => {
-    validateAuthorization(context.headers);
+    auth.validateAuthorization(context.headers);
     User.findOne(args).exec((err, res) => {
       err ? reject(err) : resolve(res);
     });
@@ -45,7 +55,7 @@ const user = (root, args, context)=>{
 
 const users = (root, args, context)=>{
   return new Promise((resolve, reject) => {
-    validateAuthorization(context.headers);
+    auth.validateAuthorization(context.headers);
     User.find({})
       .populate()
       .exec((err, res) => {
@@ -73,9 +83,9 @@ const addUser = (root, { username, email, password }, context)=>{
 const editUser = (root, { _id, username, email, role, password }, context)=>{
   return new Promise((resolve, reject) => {
     //Check Auth
-    validateAuthorization(context.headers);
-    const isAdmin = isAdministrator(context.headers);
-    const sameClient = isSameClient(context.headers, _id);
+    auth.validateAuthorization(context.headers);
+    const isAdmin = auth.isAdministrator(context.headers);
+    const sameClient = auth.isSameClient(context.headers, _id);
     if(!isAdmin && !sameClient) 
       return reject(new Error('NOT_ALLOWED'));
     
@@ -108,9 +118,9 @@ const editUser = (root, { _id, username, email, role, password }, context)=>{
 };
 
 const deleteUser = (root, args, context)=>{
-  validateAuthorization(context.headers);
-  const isAdmin = isAdministrator(context.headers);
-  const sameClient = isSameClient(context.headers, _id);
+  auth.validateAuthorization(context.headers);
+  const isAdmin = auth.isAdministrator(context.headers);
+  const sameClient = auth.isSameClient(context.headers, _id);
   if(!isAdmin && !sameClient) 
     return reject(new Error('NOT_ALLOWED'));
   return new Promise((resolve, reject) => {
@@ -123,6 +133,7 @@ const deleteUser = (root, args, context)=>{
 export default {
   Query: {
     login,
+    refreshToken,
     userByID,
     user,
     users
