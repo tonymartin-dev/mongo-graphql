@@ -1,5 +1,6 @@
 // The Product schema.
 import Product from "../../../models/Product";
+import * as auth from '../../../auth/auth'
 
 //UTILS
 const productsAndCountPromise = (_promisesArray)=>{
@@ -13,9 +14,10 @@ const productsAndCountPromise = (_promisesArray)=>{
   });
 }
 
-const countByQuery = (_query)=>{
+const countByQuery = (_query, context)=>{
   console.log('[Query]: countByQuery')
-  return new Promise((resolve, reject) => {
+    auth.validateAuthorization(context.headers);
+    return new Promise((resolve, reject) => {
     Product.countDocuments(_query)
       .exec((err, res) => {
         console.log('[Response]: productsCount', res)
@@ -25,7 +27,8 @@ const countByQuery = (_query)=>{
 }
 
 //QUERIES
-const product = (root, args) => {
+const product = (root, args, context) => {
+  auth.validateAuthorization(context.headers);
   return new Promise((resolve, reject) => {
     Product.findById(args._id).exec((err, res) => {
       err ? reject(err) : resolve(res);
@@ -33,8 +36,9 @@ const product = (root, args) => {
   });
 }
 
-const products = (root, args) => {
-  console.log('[Query]: products', args)
+const products = (root, args, context) => {
+  console.log('[Query]: products', args);
+  auth.validateAuthorization(context.headers);
   return new Promise((resolve, reject) => {
     Product.find({})
       .limit(args.limit)
@@ -47,13 +51,14 @@ const products = (root, args) => {
   });
 }
 
-const productsAndCount = (root, args) => {
+const productsAndCount = (root, args, context) => {
   console.log('[Query]: productsAndCount');
-  return productsAndCountPromise([products(root, args), productsCount(root, args)])
+  return productsAndCountPromise([products(root, args, context), productsCount(root, args, context)])
 }
 
-const productsByCategory = (root, args) => {
+const productsByCategory = (root, args, context) => {
   console.log('[Query]: productsByCategory', args)
+  auth.validateAuthorization(context.headers);
   return new Promise((resolve, reject) => {
     Product.find({category: args.category})
       .limit(args.limit)
@@ -66,12 +71,13 @@ const productsByCategory = (root, args) => {
   });
 }
 
-const productsByCategories = (root, args) => {
+const productsByCategories = (root, args, context) => {
   let categories = [];
   args.categories.forEach(category=>categories.push({category}));
   const query = { $or: categories };
   
   console.log('[Query]: productsByCategories',{query});
+  auth.validateAuthorization(context.headers);
   return new Promise((resolve, reject) => {
     Product.find(query)
       .limit(args.limit)
@@ -92,7 +98,8 @@ const productsByCategoriesAndCount = (root, args) => {
 const productsByName = (root, args) => {
   const searchQuery =  RegExp(`.*${args.name}.*`, 'i');
 
-  console.log('[Query]: productsByName', {searchQuery});
+  console.log('[Query]: productsByName', {searchQuery}, context);
+  auth.validateAuthorization(context.headers);
   return new Promise((resolve, reject) => {
     Product.find({name: searchQuery})
       .limit(args.limit)
@@ -104,33 +111,34 @@ const productsByName = (root, args) => {
   });
 }
 
-const productsByNameAndCount = (root, args) => {
+const productsByNameAndCount = (root, args, context) => {
   const searchQuery =  RegExp(`.*${args.name}.*`, 'i');
 
   console.log('[Query]: productsByNameAndCount', {searchQuery});
-  return productsAndCountPromise([productsByName(root, args), countByQuery({name: searchQuery})])
+  return productsAndCountPromise([productsByName(root, args), countByQuery({name: searchQuery}, context)])
   
 }
 
-const productsCount = (root, args) => {
+const productsCount = (root, args, context) => {
   console.log('[Query]: productsCount');
-  return countByQuery({})
+  return countByQuery({}, context)
 }
 
-const productsByCategoriesCount = (root, args) => {
+const productsByCategoriesCount = (root, args, context) => {
   let categories = [];
   args.categories.forEach(category=>categories.push({category}));
   const query = { $or: categories };
   
   console.log('[Query]: productsByCategoriesCount',{query}); 
-  return countByQuery(query);
+  return countByQuery(query, context);
 }
 
 //MUTATIONS
 
-const addProduct= (root, { _id, name, description, price, category }) => {
+const addProduct= (root, { _id, name, description, price, category }, context) => {
   const newProduct = new Product({ _id, name, description, price, category });
-
+  console.log('[Query]: addProduct');
+  auth.validateAuthorization(context.headers);
   return new Promise((resolve, reject) => {
     newProduct.save((err, res) => {
       err ? reject(err) : resolve(res);

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken')
 const secretKey = 'CHtLJ,8f252rm[j';
-const tokenExpirationSeconds= 6 * 60;
+const tokenExpirationSeconds= 11 * 60;
 
 function generateToken(_userData) {
   const tokenData = { _id: _userData._id, username: _userData.username, role: _userData.role}
