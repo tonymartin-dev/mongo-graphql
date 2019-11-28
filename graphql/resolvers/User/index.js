@@ -35,6 +35,21 @@ const refreshToken =  (root, args, context)=>{
   })
 }
 
+const checkSession = (root, args, context)=>{
+  return new Promise(resolve=>{
+    auth.validateAuthorization(context.headers);
+    resolve('VALID_SESSION')
+  })
+}
+
+const checkAdmin = (root, args, context)=>{
+  return new Promise((resolve, reject)=>{
+    auth.validateAuthorization(context.headers);
+    const isAdmin = auth.isAdministrator(context.headers);
+    isAdmin ? resolve('ADMIN_USER') : reject(new Error('NOT_ALLOWED'))
+  })
+}
+
 const userByID = (root, args, context)=>{
   return new Promise((resolve, reject) => {
     auth.validateAuthorization(context.headers);
@@ -134,6 +149,8 @@ export default {
   Query: {
     login,
     refreshToken,
+    checkSession,
+    checkAdmin,
     userByID,
     user,
     users
