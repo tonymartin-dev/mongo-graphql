@@ -25,6 +25,30 @@ const login = (root, {username, password})=>{
   });
 }
 
+const refreshToken =  (root, args, context)=>{
+  return new Promise((resolve, reject) => {
+    auth.validateAuthorization(context.headers);
+    const payload = auth.getPayload(context.headers);
+    const token = auth.generateToken(payload);
+    resolve(token)
+  })
+}
+
+const checkSession = (root, args, context)=>{
+  return new Promise(resolve=>{
+    auth.validateAuthorization(context.headers);
+    resolve('VALID_SESSION')
+  })
+}
+
+const checkAdmin = (root, args, context)=>{
+  return new Promise((resolve, reject)=>{
+    auth.validateAuthorization(context.headers);
+    const isAdmin = auth.isAdministrator(context.headers);
+    isAdmin ? resolve('ADMIN_USER') : reject(new Error('NOT_ALLOWED'))
+  })
+}
+
 const userByID = (root, args, context)=>{
   return new Promise((resolve, reject) => {
     validateAuthorization(context.headers);
@@ -123,6 +147,9 @@ const deleteUser = (root, args, context)=>{
 export default {
   Query: {
     login,
+    refreshToken,
+    checkSession,
+    checkAdmin,
     userByID,
     user,
     users
